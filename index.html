@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Health Prediction Tool</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            max-width: 700px;
+            margin: 1rem auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .header p {
+            font-size: 0.85rem;
+        }
+        
+        .form-section {
+            padding: 1.2rem;
+        }
+        
+        .api-config {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1.2rem;
+            border-left: 3px solid #667eea;
+        }
+        
+        .api-config h5 {
+            font-size: 1rem;
+            margin-bottom: 0.7rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.3rem;
+            font-size: 0.85rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            padding: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .predict-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 6px;
+            padding: 0.7rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .predict-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        .predict-btn:disabled {
+            opacity: 0.7;
+        }
+        
+        .result-section {
+            margin-top: 1.2rem;
+            padding: 1rem;
+            border-radius: 6px;
+            display: none;
+        }
+        
+        .result-success {
+            background-color: #d1edff;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        
+        .result-error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .risk-low {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .risk-high {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .risk-message {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .risk-details {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .loading-spinner {
+            display: none;
+            margin-left: 0.5rem;
+        }
+        
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .invalid-feedback {
+            display: none;
+        }
+        
+        .tooltip-icon {
+            display: inline-block;
+            margin-left: 0.3rem;
+            color: #dc3545;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .form-group.has-error .tooltip-icon {
+            opacity: 1;
+        }
+        
+        .tooltip {
+            position: relative;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #dc3545;
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            font-size: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #dc3545 transparent transparent transparent;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-heartbeat me-2"></i>AI Health Prediction Tool</h1>
+            <p class="mb-0">Advanced health risk assessment using machine learning</p>
+        </div>
+        
+        <!-- Form Section -->
+        <div class="form-section">
+            <!-- API Configuration -->
+            <div class="api-config">
+                <h5><i class="fas fa-cog me-2"></i>API Configuration</h5>
+                <div class="form-group">
+                    <label for="apiUrl" class="form-label">API Endpoint URL
+                        <span class="tooltip tooltip-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span class="tooltiptext">Please enter a valid API URL</span>
+                        </span>
+                    </label>
+                    <input type="url" 
+                           class="form-control" 
+                           id="apiUrl" 
+                           placeholder="https://api.example.com/predict"
+                           required>
+                </div>
+            </div>
+            
+            <!-- Health Parameters Form -->
+            <form id="healthForm" novalidate>
+                <h6><i class="fas fa-user-md me-2"></i>Health Parameters</h6>
+                
+                <div class="parameter-grid">
+                    <!-- Age -->
+                    <div class="form-group">
+                        <label for="age" class="form-label">Age
+                            <span class="tooltip tooltip-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span class="tooltiptext">Please enter a valid age (1-120 years)</span>
+                            </span>
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="age" 
+                               min="1" 
+                               max="120" 
+                               step="1"
+                               placeholder="Age (years)"
+                               required>
+                    </div>
+                    
+                    <!-- Salt Intake -->
+                    <div class="form-group">
+                        <label for="saltIntake" class="form-label">Salt Intake (g/day)
+                            <span class="tooltip tooltip-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span class="tooltiptext">Please enter a valid salt intake (0-50 g/day)</span>
+                            </span>
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="saltIntake" 
+                               min="0" 
+                               max="50" 
+                               step="0.1"
+                               placeholder="Salt (g/day)"
+                               required>
+                    </div>
+                    
+                    <!-- Stress Score -->
+                    <div class="form-group">
+                        <label for="stressScore" class="form-label">Stress Score
+                            <span class="tooltip tooltip-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span class="tooltiptext">Please enter a valid stress score (1-10)</span>
+                            </span>
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="stressScore" 
+                               min="1" 
+                               max="10" 
+                               step="1"
+                               placeholder="Stress (1-10)"
+                               required>
+                    </div>
+                    
+                    <!-- Sleep Duration -->
+                    <div class="form-group">
+                        <label for="sleepDuration" class="form-label">Sleep Duration (hours)
+                            <span class="tooltip tooltip-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span class="tooltiptext">Please enter a valid sleep duration (0-24 hours)</span>
+                            </span>
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="sleepDuration" 
+                               min="0" 
+                               max="24" 
+                               step="0.5"
+                               placeholder="Sleep (hours)"
+                               required>
+                    </div>
+                    
+                    <!-- BMI -->
+                    <div class="form-group">
+                        <label for="bmi" class="form-label">BMI (Body Mass Index)
+                            <span class="tooltip tooltip-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span class="tooltiptext">Please enter a valid BMI (10-60)</span>
+                            </span>
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="bmi" 
+                               min="10" 
+                               max="60" 
+                               step="0.1"
+                               placeholder="BMI"
+                               required>
+                    </div>
+                    
+                    <!-- BP History -->
+                    <div class="form-group">
+                        <label for="bpHistory" class="form-label">Blood Pressure History
+                            <span class="tooltip tooltip-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span class="tooltiptext">Please select a blood pressure history</span>
+                            </span>
+                        </label>
+                        <select class="form-select" id="bpHistory" required>
+                            <option value="">Select BP History</option>
+                            <option value="Normal">Normal</option>
+                            <option value="Prehypertension">Prehypertension</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Medication -->
+                    <div class="form-group">
+                        <label for="medication" class="form-label">Current Medication
+                            <span class="tooltip tooltip-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span class="tooltiptext">Please select a medication type</span>
+                            </span>
+                        </label>
+                        <select class="form-select" id="medication" required>
+                            <option value="">Select Medication</option>
+                            <option value="None">None</option>
+                            <option value="ACE Inhibitor">ACE Inhibitor</option>
+                            <option value="Beta Blocker">Beta Blocker</option>
+                            <option value="Diuretic">Diuretic</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Family History -->
+                    <div class="form-group">
+                        <label for="familyHistory" class="form-label">Family History
+                            <span class="tooltip tooltip-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span class="tooltiptext">Please select family history status</span>
+                            </span>
+                        </label>
+                        <select class="form-select" id="familyHistory" required>
+                            <option value="">Select Family History</option>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Exercise Level -->
+                    <div class="form-group">
+                        <label for="exerciseLevel" class="form-label">Exercise Level
+                            <span class="tooltip tooltip-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span class="tooltiptext">Please select an exercise level</span>
+                            </span>
+                        </label>
+                        <select class="form-select" id="exerciseLevel" required>
+                            <option value="">Select Exercise Level</option>
+                            <option value="High">High</option>
+                            <option value="Low">Low</option>
+                            <option value="Moderate">Moderate</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Smoking Status -->
+                    <div class="form-group">
+                        <label for="smokingStatus" class="form-label">Smoking Status
+                            <span class="tooltip tooltip-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span class="tooltiptext">Please select smoking status</span>
+                            </span>
+                        </label>
+                        <select class="form-select" id="smokingStatus" required>
+                            <option value="">Select Smoking Status</option>
+                            <option value="Non-Smoker">Non-Smoker</option>
+                            <option value="Smoker">Smoker</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Predict Button -->
+                <div class="form-group mt-3">
+                    <button type="submit" class="btn btn-primary predict-btn" id="predictBtn">
+                        <i class="fas fa-brain me-2"></i>Predict
+                        <div class="spinner-border spinner-border-sm loading-spinner" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Results Section -->
+            <div id="resultSection" class="result-section">
+                <h6><i class="fas fa-chart-line me-2"></i>Results</h6>
+                <div id="resultContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Form validation and submission handling
+            $('#healthForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                // Validate API URL first
+                const apiUrl = $('#apiUrl').val().trim();
+                if (!apiUrl || !isValidUrl(apiUrl)) {
+                    showError('Please enter a valid API URL');
+                    $('#apiUrl').closest('.form-group').addClass('has-error');
+                    return;
+                } else {
+                    $('#apiUrl').closest('.form-group').removeClass('has-error');
+                }
+                
+                // Validate all form fields
+                if (!validateForm()) {
+                    showError('Please fill in all required fields with valid values');
+                    return;
+                }
+                
+                // Collect form data
+                const formData = collectFormData();
+                
+                // Make API request
+                makePredictionRequest(apiUrl, formData);
+            });
+            
+            // Real-time validation
+            $('input, select').on('blur change', function() {
+                validateField($(this));
+            });
+            
+            // Clear API URL validation on input
+            $('#apiUrl').on('input', function() {
+                $(this).closest('.form-group').removeClass('has-error');
+            });
+            
+            function isValidUrl(string) {
+                try {
+                    new URL(string);
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            }
+            
+            function validateField($field) {
+                const fieldId = $field.attr('id');
+                const value = $field.val().trim();
+                let isValid = true;
+                
+                // Check if required field is empty
+                if ($field.prop('required') && !value) {
+                    isValid = false;
+                }
+                
+                // Specific validation for numeric fields
+                if (isValid && value) {
+                    switch (fieldId) {
+                        case 'age':
+                            isValid = !isNaN(value) && parseInt(value) >= 1 && parseInt(value) <= 120;
+                            break;
+                        case 'saltIntake':
+                            isValid = !isNaN(value) && parseFloat(value) >= 0 && parseFloat(value) <= 50;
+                            break;
+                        case 'stressScore':
+                            isValid = !isNaN(value) && parseInt(value) >= 1 && parseInt(value) <= 10;
+                            break;
+                        case 'sleepDuration':
+                            isValid = !isNaN(value) && parseFloat(value) >= 0 && parseFloat(value) <= 24;
+                            break;
+                        case 'bmi':
+                            isValid = !isNaN(value) && parseFloat(value) >= 10 && parseFloat(value) <= 60;
+                            break;
+                    }
+                }
+                
+                // Update field appearance and tooltip visibility
+                const $formGroup = $field.closest('.form-group');
+                if (isValid) {
+                    $formGroup.removeClass('has-error');
+                    $field.removeClass('is-invalid').addClass('is-valid');
+                } else {
+                    $formGroup.addClass('has-error');
+                    $field.removeClass('is-valid').addClass('is-invalid');
+                }
+                
+                return isValid;
+            }
+            
+            function validateForm() {
+                let isFormValid = true;
+                
+                // Validate all required fields
+                $('input[required], select[required]').each(function() {
+                    if (!validateField($(this))) {
+                        isFormValid = false;
+                    }
+                });
+                
+                return isFormValid;
+            }
+            
+            function collectFormData() {
+                return {
+                    Age: parseInt($('#age').val()),
+                    Salt_Intake: parseFloat($('#saltIntake').val()),
+                    Stress_Score: parseInt($('#stressScore').val()),
+                    Sleep_Duration: parseFloat($('#sleepDuration').val()),
+                    BMI: parseFloat($('#bmi').val()),
+                    BP_History: $('#bpHistory').val(),
+                    Medication: $('#medication').val(),
+                    Family_History: $('#familyHistory').val(),
+                    Exercise_Level: $('#exerciseLevel').val(),
+                    Smoking_Status: $('#smokingStatus').val()
+                };
+            }
+            
+            function makePredictionRequest(apiUrl, data) {
+                // Show loading state
+                setLoadingState(true);
+                hideResults();
+                
+                $.ajax({
+                    url: apiUrl,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    timeout: 30000, // 30 second timeout
+                    success: function(response) {
+                        setLoadingState(false);
+                        showSuccess(response);
+                    },
+                    error: function(xhr, status, error) {
+                        setLoadingState(false);
+                        
+                        let errorMessage = 'An error occurred while making the prediction request.';
+                        
+                        if (status === 'timeout') {
+                            errorMessage = 'Request timed out. Please try again or check your API endpoint.';
+                        } else if (xhr.status === 0) {
+                            errorMessage = 'Unable to connect to the API. Please check the URL and your internet connection.';
+                        } else if (xhr.status === 404) {
+                            errorMessage = 'API endpoint not found (404). Please verify the API URL.';
+                        } else if (xhr.status === 500) {
+                            errorMessage = 'Internal server error (500). Please try again later.';
+                        } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMessage = `API Error: ${xhr.responseJSON.error}`;
+                        } else if (xhr.responseText) {
+                            errorMessage = `API Error: ${xhr.responseText}`;
+                        }
+                        
+                        showError(errorMessage);
+                    }
+                });
+            }
+            
+            function setLoadingState(isLoading) {
+                const $btn = $('#predictBtn');
+                const $spinner = $('.loading-spinner');
+                
+                if (isLoading) {
+                    $btn.prop('disabled', true);
+                    $spinner.show();
+                    $btn.find('.fas').hide();
+                } else {
+                    $btn.prop('disabled', false);
+                    $spinner.hide();
+                    $btn.find('.fas').show();
+                }
+            }
+            
+            function showSuccess(response) {
+                const $resultSection = $('#resultSection');
+                const $resultContent = $('#resultContent');
+                
+                // Determine hypertension risk from response
+                const hasHypertensionRisk = parseHypertensionRisk(response);
+                
+                let resultHtml = '';
+                
+                if (hasHypertensionRisk === true) {
+                    // High risk - yellow background
+                    resultHtml = `
+                        <div class="risk-high">
+                            <div class="risk-message">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Yes, the patient has hypertension risk
+                            </div>
+                            <div class="risk-details">
+                                Based on the provided health parameters, there is an indication of hypertension risk. 
+                                Please consult with a healthcare professional for proper evaluation and guidance.
+                            </div>
+                        </div>
+                    `;
+                } else if (hasHypertensionRisk === false) {
+                    // Low risk - green background
+                    resultHtml = `
+                        <div class="risk-low">
+                            <div class="risk-message">
+                                <i class="fas fa-check-circle me-2"></i>
+                                No, the patient has no hypertension risk
+                            </div>
+                            <div class="risk-details">
+                                Based on the provided health parameters, there is no indication of hypertension risk. 
+                                Continue maintaining healthy lifestyle habits.
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Unable to determine - show original response
+                    resultHtml = `
+                        <div class="alert alert-info">
+                            <div class="risk-message">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Prediction Result
+                            </div>
+                            <div class="mt-2">
+                                <pre class="bg-light p-3 rounded mb-0">${JSON.stringify(response, null, 2)}</pre>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                $resultContent.html(resultHtml);
+                $resultSection.removeClass('result-error').show();
+                
+                // Scroll to results
+                $resultSection[0].scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            function parseHypertensionRisk(response) {
+                console.log('Parsing response:', response, 'Type:', typeof response);
+                
+                // Try to determine hypertension risk from various response formats
+                if (typeof response === 'object' && response !== null) {
+                    // Check common field names for prediction results
+                    const fields = ['prediction', 'result', 'hypertension', 'risk', 'output', 'class', 'label', 'value', 'answer'];
+                    
+                    for (let field of fields) {
+                        if (response.hasOwnProperty(field)) {
+                            const value = response[field];
+                            console.log(`Found field "${field}" with value:`, value, 'Type:', typeof value);
+                            
+                            // Check for various formats indicating risk
+                            if (typeof value === 'boolean') {
+                                return value;
+                            } else if (Array.isArray(value)) {
+                                // Handle array responses like ["No"] or ["Yes"]
+                                if (value.length > 0) {
+                                    const firstElement = value[0];
+                                    if (typeof firstElement === 'string') {
+                                        const lowerValue = firstElement.toLowerCase().trim();
+                                        if (lowerValue.includes('yes') || lowerValue.includes('high') || 
+                                            lowerValue.includes('risk') || lowerValue.includes('positive') ||
+                                            lowerValue === '1' || lowerValue === 'true' || lowerValue === 'hypertension') {
+                                            return true;
+                                        } else if (lowerValue.includes('no') || lowerValue.includes('low') || 
+                                                  lowerValue.includes('normal') || lowerValue.includes('negative') ||
+                                                  lowerValue === '0' || lowerValue === 'false' || lowerValue === 'no hypertension') {
+                                            return false;
+                                        }
+                                    } else if (typeof firstElement === 'number') {
+                                        return firstElement >= 0.5;
+                                    } else if (typeof firstElement === 'boolean') {
+                                        return firstElement;
+                                    }
+                                }
+                            } else if (typeof value === 'string') {
+                                const lowerValue = value.toLowerCase().trim();
+                                if (lowerValue.includes('yes') || lowerValue.includes('high') || 
+                                    lowerValue.includes('risk') || lowerValue.includes('positive') ||
+                                    lowerValue === '1' || lowerValue === 'true' || lowerValue === 'hypertension') {
+                                    return true;
+                                } else if (lowerValue.includes('no') || lowerValue.includes('low') || 
+                                          lowerValue.includes('normal') || lowerValue.includes('negative') ||
+                                          lowerValue === '0' || lowerValue === 'false' || lowerValue === 'no hypertension') {
+                                    return false;
+                                }
+                            } else if (typeof value === 'number') {
+                                // Assume 1 = risk, 0 = no risk for numeric predictions
+                                return value >= 0.5;
+                            }
+                        }
+                    }
+                    
+                    // If no specific field found, check if response has any values
+                    const values = Object.values(response);
+                    if (values.length === 1) {
+                        const singleValue = values[0];
+                        if (typeof singleValue === 'boolean') {
+                            return singleValue;
+                        } else if (typeof singleValue === 'number') {
+                            return singleValue >= 0.5;
+                        } else if (typeof singleValue === 'string') {
+                            const lowerValue = singleValue.toLowerCase().trim();
+                            if (lowerValue.includes('yes') || lowerValue.includes('high') || 
+                                lowerValue.includes('risk') || lowerValue.includes('positive') ||
+                                lowerValue === '1' || lowerValue === 'true' || lowerValue === 'hypertension') {
+                                return true;
+                            } else if (lowerValue.includes('no') || lowerValue.includes('low') || 
+                                      lowerValue.includes('normal') || lowerValue.includes('negative') ||
+                                      lowerValue === '0' || lowerValue === 'false' || lowerValue === 'no hypertension') {
+                                return false;
+                            }
+                        }
+                    }
+                } else if (typeof response === 'string') {
+                    const lowerResponse = response.toLowerCase().trim();
+                    if (lowerResponse.includes('yes') || lowerResponse.includes('high') || 
+                        lowerResponse.includes('risk') || lowerResponse.includes('positive') ||
+                        lowerResponse === '1' || lowerResponse === 'true' || lowerResponse === 'hypertension') {
+                        return true;
+                    } else if (lowerResponse.includes('no') || lowerResponse.includes('low') || 
+                              lowerResponse.includes('normal') || lowerResponse.includes('negative') ||
+                              lowerResponse === '0' || lowerResponse === 'false' || lowerResponse === 'no hypertension') {
+                        return false;
+                    }
+                } else if (typeof response === 'number') {
+                    return response >= 0.5;
+                } else if (typeof response === 'boolean') {
+                    return response;
+                }
+                
+                console.log('Unable to parse response, showing original');
+                // Default to no risk if completely unable to determine
+                return false;
+            }
+            
+            function showError(message) {
+                const $resultSection = $('#resultSection');
+                const $resultContent = $('#resultContent');
+                
+                const errorHtml = `
+                    <div class="alert alert-danger mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Error:</strong> ${escapeHtml(message)}
+                    </div>
+                `;
+                
+                $resultContent.html(errorHtml);
+                $resultSection.removeClass('result-success').addClass('result-error').show();
+                
+                // Scroll to results
+                $resultSection[0].scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            function hideResults() {
+                $('#resultSection').hide();
+            }
+            
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        });
+    </script>
+</body>
+</html>
